@@ -23,6 +23,7 @@ export default defineConfig({
       providerImportSource: '@mdx-js/react',
     }),
     remix({
+      serverBuildFile: 'server.js',
       routes(defineRoutes) {
         return defineRoutes(route => {
           route('/', 'routes/home/route.js', { index: true });
