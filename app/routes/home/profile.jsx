@@ -24,7 +24,7 @@ const ProfileText = ({ visible, titleId }) => (
       I’m Hugo Fanchini, currently living in France as a graduate student specializing in Multimodal and Autonomous AI at{' '}
       <Link href="https://www.telecom-paris.fr">Telecom Paris</Link>.<br /><br />
       This is my portfolio, where I highlight six selected projects that reflect the work I’m most proud of. <br /><br />
-      If you’d like to explore more, the <Link href="/articles">Playground</Link> section features additional experiments, side projects, and other ideas I’ve worked on.<br /><br />
+      If you’d like to explore more, the <Link href="/playground">Playground</Link> section features additional experiments, side projects, and other ideas I’ve worked on.<br /><br />
       My main work focuses on building intelligent systems across generative AI, machine learning, 
       deep learning, reinforcement learning, NLP and Computer Vision, primarily developed in {' '}<Link href="https://www.python.org/">Python</Link> both through academic research and 
       personal exploration.<br />
