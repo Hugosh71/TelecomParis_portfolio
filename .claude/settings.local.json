@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(find \"c:\\\\Users\\\\fanch\\\\OneDrive\\\\Bureau\\\\PortfolioTelecom\\\\app\\\\routes\\\\projects\"* -name \"*.jsx\")"
-    ]
-  }
-}
