@@ -1,0 +1,29 @@
+.uses {
+  --maxWidthL: var(--maxWidthM);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-top: calc(var(--space5XL) + var(--space3XL));
+  padding-bottom: var(--space2XL);
+  max-width: var(--maxWidthL);
+  margin: 0 auto;
+}
+
+.section {
+  opacity: 0;
+  padding-top: var(--space2XL);
+  padding-bottom: var(--space2XL);
+  margin-top: var(--space2XL);
+
+  &:global {
+    animation: fade-in 1s ease 1s forwards;
+  }
+
+  + & {
+    margin-top: 0;
+  }
+}

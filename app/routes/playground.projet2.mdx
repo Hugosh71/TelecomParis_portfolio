@@ -1,0 +1,204 @@
+---
+title: 'CHAI Fairness - Exploring Fairness in AI Ethics Texts'
+abstract: A corpus-based NLP project investigating how the notion of fairness appears across AI ethics charters, from lexical analysis to sentence extraction, syntactic roles, and AMR-based semantic exploration.
+date: '2025-11-12'
+banner: /static/hello-world-banner.jpg
+---
+
+## Introduction
+
+This project was carried out at Telecom Paris in the context of CHAI, with the goal of studying how the concept of *fairness* is expressed in a large corpus of AI ethics charters and manifestos.
+
+Rather than approaching fairness as a purely theoretical notion, the project explores how it is actually used in texts: how often it appears, in what documents, in which linguistic contexts, and with what semantic roles. To do so, the work combines corpus linguistics, NLP preprocessing, syntactic analysis, and AMR-based semantic exploration.
+
+More specifically, the project follows two main directions:
+
+1. **Corpus exploration:** understanding the structure of the MapAIE corpus and identifying recurring lexical patterns related to AI ethics.
+2. **Fairness analysis:** focusing on the term *fairness* itself, from frequency and contextual usage to syntactic and semantic interpretation.
+
+## Context and objectives
+
+The last few years have seen a growing number of AI ethics initiatives, resulting in hundreds of charters, recommendations, and manifestos published by institutions, companies, and governments. While these documents often refer to common principles such as transparency, accountability, and fairness, their actual wording and framing can vary significantly.
+
+This project relies on the **MapAIE** corpus, a collection of AI ethics documents, and aims to better understand how *fairness* is represented in this material. The idea was not only to count occurrences, but to move gradually from document-level analysis to sentence-level and graph-level interpretation.
+
+### Working with the corpus
+
+The first stage of the project focused on preparing and understanding the corpus itself. Because the documents are available both as PDFs and extracted text files, an important step was to identify what each format enables for linguistic analysis. The plain text version makes tokenization, frequency analysis, and preprocessing much easier, while the original PDF format preserves layout and contextual structure that may still be relevant for interpretation.
+
+A first step was simply to load the corpus and inspect document-level metadata:
+
+```python
+from pathlib import Path
+
+corpus_path = Path("data/mapaie_txt")
+documents = list(corpus_path.glob("*.txt"))
+
+print(f"Number of documents: {len(documents)}")
+
+sample_text = documents[0].read_text(encoding="utf-8")
+print(sample_text[:500])
+``` 
+This stage also included a broad lexical analysis of the corpus, highlighting the most frequent words and recurring themes in AI ethics discourse. 
+Going further, preprocessing techniques such as lemmatization and stemming helped reveal more stable conceptual patterns hidden behind morphological variation.
+
+```python
+from collections import Counter
+import re
+
+tokens = re.findall(r"\b[a-zA-Z]+\b", sample_text.lower())
+freq = Counter(tokens)
+
+print(freq.most_common(20))
+```
+
+### Focusing on fairness
+
+The second stage narrowed the scope to the term fairness. At first, the project examined how often the term appears in each document, both in raw count and relative proportion. 
+
+This made it possible to identify which documents rely most heavily on fairness as a principle and to observe how corpus size can influence simple frequency measurements.
+
+```python
+fairness_stats = []
+
+for doc_path in documents:
+    text = doc_path.read_text(encoding="utf-8").lower()
+    fairness_count = text.count("fairness")
+    word_count = len(re.findall(r"\b[a-zA-Z]+\b", text))
+    ratio = fairness_count / word_count if word_count else 0
+
+    fairness_stats.append({
+        "document": doc_path.name,
+        "fairness_count": fairness_count,
+        "word_count": word_count,
+        "fairness_ratio": ratio,
+    })
+
+top_docs = sorted(fairness_stats, key=lambda x: x["fairness_ratio"], reverse=True)[:10]
+top_docs
+```
+
+The next step was to move from document-level statistics to sentence-level analysis by extracting a dedicated fairness-MapAIE subcorpus containing all sentences in which the term appears. 
+
+This shift inevitably removes some discourse context, but it also enables a much finer linguistic study of fairness as it is used locally in real sentences.
+
+```python
+import nltk
+nltk.download("punkt")
+
+fairness_sentences = []
+
+for doc_path in documents:
+    text = doc_path.read_text(encoding="utf-8")
+    for sent in nltk.sent_tokenize(text):
+        if "fairness" in sent.lower():
+            fairness_sentences.append(sent)
+
+print(f"Extracted {len(fairness_sentences)} fairness-related sentences")
+print(fairness_sentences[:5])
+```
+
+## A closer linguistic approach
+
+Once the fairness-centered subcorpus had been extracted, the project moved toward more detailed linguistic analysis.
+
+## Syntax and grammatical roles
+
+At the syntactic level, the objective was to determine the grammatical roles associated with the word fairness. Using POS tagging and dependency-based analysis, the project investigated whether fairness tends to appear as a subject, object, complement, or nominal head, and what this reveals about the way the concept is framed in AI ethics discourse.
+
+This made it possible to observe that fairness is often used less as an autonomous action-oriented concept and more as a property, value, or quality attached to broader systems, procedures, or principles.
+
+A dependency parser can be used to inspect how the word appears in context:
+
+```python
+import spacy
+
+nlp = spacy.load("en_core_web_sm")
+
+example = fairness_sentences[0]
+doc = nlp(example)
+
+for token in doc:
+    if token.text.lower() == "fairness":
+        print("Token:", token.text)
+        print("Dependency:", token.dep_)
+        print("Head:", token.head.text)
+        print("Children:", [child.text for child in token.children])
+```
+
+## Semantic exploration with AMR
+
+To go beyond surface syntax, the final stage of the project turned to Abstract Meaning Representation (AMR) graphs. AMR provides a semantic abstraction of sentences by representing concepts and their relations in graph form.
+
+Through the exploration of AMR graphs extracted from the fairness-related sentences, the project examined how fairness is represented semantically, which PropBank concepts are associated with it, and whether it appears as a central notion or as a dependent attribute linked to larger ethical or social structures.
+
+A simplified example of an AMR workflow might look like this:
+
+```python
+fairness_example = fairness_sentences[0]
+
+print("Sentence:")
+print(fairness_example)
+
+print("\nAMR graph:")
+print("""
+(f / fairness
+   :mod (a / algorithmic)
+   :domain (s / system))
+""")
+```
+This semantic layer revealed that fairness is rarely encoded as an isolated concept. Instead, it tends to appear as a contextual property, often attached to broader ideas such as justice, inclusion, or responsible decision-making.
+
+## Method and results
+
+The project follows a progressive methodology, moving from corpus retrieval to increasingly fine-grained linguistic analysis.
+
+### Method
+
+The overall workflow can be summarized in four steps:
+1. **Corpus preparation** using the MapAIE collection of AI ethics documents.
+2. **Lexical exploration** through frequency analysis and preprocessing techniques such as lemmatization and stemming.
+3. **Fairness-focused sentence extraction** to build a dedicated subcorpus for local linguistic analysis.
+4. **Syntactic and semantic interpretation** through dependency-based analysis and AMR graph exploration.
+
+This layered approach made it possible to study fairness at several levels : as a recurring keywords in documents, as a lexical item in sentences, and as a semantic component in abstract graph structures.
+
+A compact view of the pipeline is : 
+```python
+pipeline = [
+    "Load corpus",
+    "Clean and tokenize text",
+    "Measure fairness frequency",
+    "Extract fairness-related sentences",
+    "Run syntactic analysis",
+    "Inspect AMR representations",
+]
+
+for step in pipeline:
+    print("•", step)
+```
+
+## Results 
+
+Several important findings emerged from the project.
+
+First, fairness appears frequently in AI ethics texts, but its distribution is highly uneven: some documents rely on it heavily, while others mention it only marginally. Raw counts alone can therefore be misleading without normalization.
+
+Second, the local linguistic context of fairness suggests that it is most often framed as a noun embedded in larger constructions rather than as an independent driving concept. Its syntactic and semantic behavior indicates that fairness is usually presented as a desired property of systems, policies, or outcomes.
+
+Finally, the AMR analysis showed that fairness is rarely represented as a fully autonomous semantic center. Instead, it tends to function as a contextual quality attached to broader ethical concepts, confirming that its meaning is often relational rather than self-contained.
+
+A very simple summary table can be generated to compare documents:
+
+```python
+import pandas as pd
+
+df = pd.DataFrame(fairness_stats)
+df = df.sort_values("fairness_ratio", ascending=False)
+
+print(df[["document", "fairness_count", "fairness_ratio"]].head(10))
+```
+Overall, the project provided a structured linguistic perspective and how AI Ethics discourse operationalizes the notion of fairness,
+combining corpus methods, NLP tool, and semantic graph analysis into a single exploratory workflow.
+
+The full code and analysis can be integrated into a broader NLP portfolio as an example of corpus exploration, fairness-related text analysis, and interpretable semantic investigation.

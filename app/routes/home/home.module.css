@@ -1,0 +1,11 @@
+.home {
+  overflow-x: hidden;
+}
+
+.projectsLeadEyebrow {
+  margin: 0 0 16px;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--textLight);
+}

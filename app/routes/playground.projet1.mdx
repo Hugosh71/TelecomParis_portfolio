@@ -1,0 +1,247 @@
+---
+title: 'Hand Gesture Recognition for Game Control'
+abstract: A computer vision project exploring how far a lightweight hand-gesture pipeline can go in real-world gameplay, from HaGRID-based training to real-time control in Flappy Bird and Mario.
+date: '2026-03-16'
+banner: /static/modern-styling-in-react-banner.jpg
+---
+
+## Introduction
+
+This project started from a simple question: can a lightweight computer vision pipeline be reliable enough to control a video game in real time with hand gestures?
+
+To explore that question, we built a gesture recognition system based on **MediaPipe hand landmarks** and a **logistic regression classifier**, then tested it in increasingly realistic settings. 
+
+The project did not stop at offline accuracy: the real objective was to understand what happens when a model that performs well on a public dataset is placed inside an interactive application with timing constraints, motion, ambiguity, and user variability.
+
+In practice, the project evolved along three complementary directions:
+
+1. **Build a reproducible baseline** for static hand gesture recognition using HaGRID.
+2. **Integrate the model into real-time games** such as Flappy Bird and Mario.
+3. **Study the gap between benchmark performance and real usage**, then adapt the pipeline accordingly.
+
+## Context and objectives
+
+Gesture recognition is often presented through polished demos, but real-time interaction is much less forgiving than offline evaluation. A system that performs well on a benchmark can still feel unstable in practice if it reacts too late, confuses neutral states with actual commands, or fails during transitions between gestures.
+
+This project was designed to explore exactly that gap. The starting point was **HaGRID**, a large public dataset for hand gesture recognition, and the idea was to test whether a relatively simple pipeline could already be useful for interactive control.
+
+Instead of jumping directly to heavy deep learning models, we deliberately chose an approach based on landmarks and a lightweight classifier in order to prioritize interpretability, speed, and reproducibility.
+
+### Building the baseline
+
+The first stage of the work focused on defining a clean and lightweight pipeline. MediaPipe was used to extract hand landmarks, which were then normalized into a compact 42-dimensional feature vector. These features served as input to a logistic regression classifier trained on a reduced set of gesture classes.
+
+```python
+GESTURE_CLASSES = ["fist", "like", "no_gesture", "palm", "peace", "two_up"]
+
+# 21 landmarks × 2 coordinates = 42 features
+FEATURE_DIM = 42
+RANDOM_SEED = 42
+```
+
+A key design choice was to discard the z coordinate. In theory, depth might seem useful, but in practice it introduced more instability than value for this setup.
+Keeping only normalized 2D landmarks made the pipeline simpler and more robust for the first baseline.
+
+```python 
+def normalize_landmarks_xy(landmarks):
+    coords = np.array([[lm.x, lm.y] for lm in landmarks], dtype=np.float32)
+    coords = coords - coords[0]  # center on wrist
+    scale = np.linalg.norm(coords).max() + 1e-6
+    return (coords / scale).flatten()
+```
+
+### Why a simple classifier ?
+
+Rather than starting with a deep end-to-end architecture, we chose a combination of StandardScaler and logistic regression. It was a very deliberate choice : it is fast to train, ligthweight at inference time, and easy to interpret when analyzing model errors.
+
+```python
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+
+clf = Pipeline([
+    ("scaler", StandardScaler()),
+    ("lr", LogisticRegression(
+        max_iter=2000,
+        class_weight="balanced",
+        multi_class="auto"
+    ))
+])
+```
+
+This baseline turned out to be strong enough to validate the pipeline on HaGRID, but it also made the project more interesting: because the model was simple, the limitations that appeared during real usage became easier to understand
+
+--- 
+## From benchmark to gameplay
+
+The real turning point of the project came when we integrated the classifier into a game.
+Instead of evaluating isolated images, we now had to process a live webcam stream, predict gestures continuously, and trigger actions in a Pygame loop.
+
+### Flappy Bird as a first real-time test
+
+Flappy bird as the first application used to test the system in realistic conditions. Its gameplay is mechanically simple,
+which made it ideal for validation whether gesture predictions could be translated into playable interaction.
+
+The architecture used two threads : one for the game loop and on for the vision pipeline.
+The CV thread continuously captured webcam frames, extracted landmarks, ran the classifier, and triggered a flap event when the target gesture was detected.
+
+```python
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+
+clf = Pipeline([
+    ("scaler", StandardScaler()),
+    ("lr", LogisticRegression(
+        max_iter=2000,
+        class_weight="balanced",
+        multi_class="auto"
+    ))
+])
+```
+This setup quickly showed that good offline performance does not automatically translate to smooth interaction. 
+The model could recognize the target gesture, but only under fairly controlled conditions: frontal hand pose, stable ligthing, and clean transitions.
+
+### Making the system usable 
+
+To make the interaction reliable enough for gameplay, we had to add several layers of post-processing.
+The raw classifier was too unstable frame by frame, especially during transitions between gestures or in neutral hand positions.
+
+The final decision logic combined:
+
+- a confidence threshold,
+- a margin threshold between top predictions,
+- temporal smoothing over several frames, 
+- a release mechanism to avoid repeated triggers,
+- and a cooldown to limit accidental bursts.
+
+```python
+CONF_THRESHOLD = 0.90
+MARGIN_THRESHOLD = 0.30
+SMOOTH_N = 9
+RELEASE_FRAMES = 2
+COOLDOWN_SEC = 0.20
+```
+
+These mechanisms were not just implementation details, they became part of the findings of the project.
+The need for so many safeguards revealed a structural limitation of frame-by-frame classification in a dynamic interactive context.
+
+--- 
+## Understanding the limits 
+
+One of the most interesting outcomes of the project was not just that the system could work, but that it made its own weaknesses very visible.
+
+### The no_gesture problem
+
+A major methodological issue came from the no_gesture class.
+In the dataset, it is relatively underrepresented compared to actives gestures.
+In real gameplay, however, it becomes the dominant state: most frames correspond to the user resting, transitioning, or simply not issuing a command.
+
+That mismatch creates a practical problem. A model that confuses no_gesture with an active class will generate false positives constansly, even if its overall accuracy looks good on paper.
+
+To mitigate this, we combined oversampling with class balancing:
+
+```python
+from sklearn.utils import resample
+
+# Oversample no_gesture in training
+X_ng = X_train[y_train == "no_gesture"]
+y_ng = y_train[y_train == "no_gesture"]
+
+X_ng_up, y_ng_up = resample(
+    X_ng, y_ng,
+    replace=True,
+    n_samples=target_count,
+    random_state=42
+)
+```
+Even with these adjustments, the issue never disappeared entirely. That was an important lesson: dataset balance should not be evaluated only statistically, but also with respect to the frequency of each class in the final application.
+
+### Public data vs real conditions
+
+Another limitation came from the gap between HaGRID and actual gameplay.
+HaGRID is rich and useful, but it is built from static, well-informed images.
+In a real game session, gestures are rarely held perfectly. 
+Hands move, rotate, enter transitional positions, and behave differently from the examples found in the dataset.
+
+This made domain shift one of the central themes of the project. The system was not failing because the model was "bad" in general,
+but because the deployment conditions differed signicantly from the benchmark setting.
+
+---
+
+## Adapting the pipeline
+
+Rather than redesigning the whole system, we chose to test a smaller but very practical  adaptation strategy:
+collect our own samples in real usage conditions and merge them with the public training data.
+
+### Collecting custom data
+
+The idea was to gather examples with our own webcam, background, and natural play posture, then add them to the HaGRID-based dataset while preserving the same feature extraction pipeline.
+
+This was especially useful for no_gesture, because the neutral and transitional states observed during gameplay are much more representative of real use than those found in the original dataset.
+
+```python
+CUSTOM_CLASSES = ["fist", "like", "no_gesture", "palm", "peace", "two_up"]
+
+# Same 42D normalized landmark format
+# so custom samples can be merged directly with HaGRID-based data
+```
+
+### What changed
+
+The adapted model did not dramatically change globabl benchmark scores, which was expected, sicne the added corpus remained small compared to the original training data.
+But it did improve the realism of the training setup and gave us better understand of where targeted adaptation matters most.
+
+In other words, this stage was less about chasing a higher headline metric and more about testing a practical hypothesis:
+can a small amount of domain-specific data make the system more usable where it matters.
+
+---
+
+## Extending the idea : Mario
+
+Once the Flappy Bird prototype was working, we extended the same CV pipeline to a more demanding use case: controlling Mario with multiples gestures instead of a single event.
+
+This required moving from a one-shot event system to a continuous control system, where gestures could represent movement, jumping, or combined actions.
+
+```python
+GESTURE_TO_ACTION = {
+    "palm": "move_right",
+    "like": "jump",
+    "two_up": "run_and_jump",
+    "no_gesture": "idle"
+}
+```
+
+This extension showed that the same technical core, MediaPipe landmarks, normalized 42D features, logistic regression, could be reused in a richer interactive setting.
+At the same time, it made the remaining limitations even more obvious: gesture drift, hold stability, and latency become much more critical as soon as mutliples commands are involved.
+
+---
+## Results and takeaways
+
+What I find the most interesting about this project is that it was never just a gesture classifier.
+It became a case study in what happens when a computer vision model leaves the comfort of a benchmark and enters a real-time interactive system.
+
+On paper, the baseline was already strong: a simple landmark-based classifier could reach high multi-class performance on HaGRID. In practice, however, integration into Flappy Bird and Mario revealed several deeper issues:
+
+- no_gesture becomes much more important at inference time than in training,
+- frame-by-frame classification is fragile during transitions,
+- public datasets do not necessarily reflect real usage conditions,
+- and smoothing, thresholding, and game logic become just as important as the model itself.
+
+At the same time, the project also showed the value of lightweight pipelines.
+The combination of MediaPipe landmarks and logistic regression is fast, interpretable, and easy to adapt.
+It made the whole system deployable on a standard machine, and suitable for real-time experimentation.
+
+```python
+summary = {
+    "features": "42D normalized hand landmarks",
+    "detector": "MediaPipe HandLandmarker",
+    "classifier": "Logistic Regression",
+    "applications": ["Flappy Bird", "Mario"],
+    "main challenge": "domain shift and no_gesture robustness"
+}
+
+print(summary)
+```
+In the end, the project worked: we successfully controlled Flappy Bird, then extended the idea toward Mario.
+But more importantly, it gave me a much clearer understanding of where a simple computer vision approach is sufficient, where it starts to break down, and how to reason about the gap between dataset performance and real-world interaction.

@@ -1,0 +1,149 @@
+---
+title: 'Pizza Or Not Pizza ?'
+abstract: A lightweight browser-based image classifier built with TensorFlow.js and MobileNet to detect whether a webcam image shows a pizza or not.
+date: '2023-05-02'
+banner: /static/vapor-banner.jpg
+---
+
+## Introduction
+
+Pizza Or Not Pizza? started as a simple but fun computer vision project: build an image classifier capable of deciding whether what appears in front of the webcam is a pizza or not.
+
+Even though the problem sounds playful, it is actually a great introduction to practical image classification. The project explores how a browser-based machine learning pipeline can combine a pretrained visual backbone with a lightweight custom classifier, all inside a simple HTML and JavaScript interface.
+
+More than just a demo, the project was also an opportunity to understand how transfer learning works in practice, how to structure a small dataset, and how to create an interactive prediction loop directly in the browser.
+
+## Context and objectives
+
+The goal of the project was to build a simple real-time classifier that could recognize pizzas from webcam input. Instead of training a full deep neural network from scratch, the system relies on a pretrained visual model and adapts it to a two-class task: **pizza** versus **not pizza**.
+
+This approach makes the project lightweight, fast to test, and accessible even in a browser environment. It also introduces an important machine learning idea: using pretrained features from a general-purpose vision model and attaching a much simpler classifier on top of them.
+
+### Dataset preparation
+
+The project uses a Kaggle dataset containing 983 pizza images and 983 images of other dishes. Since the data had to be organized cleanly before being used, the first step was to standardize the image collections and prepare a consistent folder structure.
+
+A small Python utility was used to rename images automatically and make dataset management easier:
+
+```python
+import os
+
+def rename_files(folder_path):
+    for i, filename in enumerate(os.listdir(folder_path)):
+        old_path = os.path.join(folder_path, filename)
+        new_path = os.path.join(folder_path, f"image_{i}.jpg")
+        os.rename(old_path, new_path)
+```
+This kind of preprocessing may seem minor, but it help keep data pipelines reproducible and easier to debug.
+
+### Building the classifier
+
+Rather than building a full CNN from scratch, the project uses MobileNet as a pretrained feature extractor and combines it with a KNN-based classifier running in JavaScript through TensorFlow.js
+
+The idea is simple: MobileNet transforms each image into a high-level visual representation, and the classifier uses those representations to decide whether the current
+webcam image looks more like the "pizza" or the "not pizza" examples
+
+A simplified version of the pipeline looks like this:
+
+```JavaScript
+const classifier = knnClassifier.create();
+const mobilenetModel = await mobilenet.load();
+
+const logits = mobilenetModel.infer(webcamElement, true);
+classifier.addExample(logits, "pizza");
+```
+
+This architecture made it possible to build a fully interactive prototype without server-side inference or heavy local setup.
+
+---
+## A browser-based computer vision demo
+
+One of the most interesting aspects of the project is that everything runs directly in the browser.
+the user simply opens the HTML page, waits for the models to load, activates the webcam, and starts testing the classifier in real time.
+
+
+### Real time prediction loop
+
+Once the page is loaded, the webcam feed is continuously processed. Each frame is passed through MobileNet, converted into features, and then classified as either pizza or not pizza.
+
+The prediction loop can be represented like this:
+
+ ```JavaScript
+while (true) {
+  const logits = mobilenetModel.infer(webcamElement, true);
+  const result = await classifier.predictClass(logits);
+
+  console.log(result.label);
+  await tf.nextFrame();
+}
+```
+
+This made the project immediately interactive, which is one of the reasons it works well as a demo: users can test the model instantly with printed images or actual dishes.
+
+### Correcting mistakes interactively
+
+A nice feature of the interface is the ability to enrich the dataset directly through the browser.
+If the model makes a mistake, the user can manually add the current webcam image to the correct class usind dedicated buttons.
+
+In practice, this tunrs the project into a small human-in-the-loop learning system:
+
+```JavaScript
+addPizzaButton.onclick = () => {
+  const logits = mobilenetModel.infer(webcamElement, true);
+  classifier.addExample(logits, "pizza");
+};
+
+addFoodButton.onclick = () => {
+  const logits = mobilenetModel.infer(webcamElement, true);
+  classifier.addExample(logits, "not_pizza");
+};
+```
+This makes the demo more dynamic and also illustrates an important practical idea: even a simple classifier can become more useful when users can help correct and extend its decision boundary.
+
+---
+## Why this project mattered
+
+Pizza Or Not Pizza is simple, but that is exactly what makes it valuable.
+It demonstrates how to go from a raw image dataset to a working browser-based computer vision app.
+
+### Learning transfer learning in practicle
+
+This project is a concrete exemple of transfer learning.
+Instead of training a large model end to end, it reuses visual featues learned by MobileNet and applies them to a much smaller binary classification problem.
+
+That made it possible to focus on :
+
+- dataset handling,
+- interactive inference,
+- browser deployment,
+- and user-facing experimentations.
+
+### From toy problem to real ML intuition
+
+Even though the classification target is playful, the underlying ideas are serious.
+The project introduces concepts that show up everywhere in applied ML:
+
+- pretrained feature extraction
+- lightweight classifiers
+- real-time webcam inference
+- interactive error correction
+- and deployment in a simple front-end environment.
+
+---
+
+## Results and takeaways
+
+The final result is a lightweight web app that can classify webcam images as pizza or not pizza directly in the browser.
+The system is simple, fast to launch, and easy to understand, making it a strong example of accessible machine learning prototyping
+
+More  importantly, the project help me understand how to bridge the gap between a dataset and an interactive demo.
+It showed that even a small classifier can become engaging when paired with a responsive interface, real-time feedback, and the ability to correct model mistakes on the fly.
+
+```JavaScript
+if (result.label === "pizza") {
+  console.log("Pizza detected 🍕");
+} else {
+  console.log("Not pizza");
+}
+```
+Pizza Or Not Pizza may have started as a playful experiment, but i became very concrete introduction to transfer learning, browser-based AI, and interactive computer vision workflows.

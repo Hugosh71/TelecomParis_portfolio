@@ -1,0 +1,187 @@
+---
+title: 'Building an Animated Galaxy in Three.js'
+abstract: A creative Three.js experiment showing how to generate and animate a procedural spiral galaxy with particles, randomness, colors, and custom shaders.
+date: '2025-03-17'
+banner: /static/space-banner.jpg
+---
+
+## Introduction
+
+This project started as a simple visual experiment: could I generate a convincing animated galaxy in Three.js using only particles, a bit of math, and a few carefully tuned parameters?
+
+What makes this kind of scene interesting is that it sits right at the intersection of code and art. On one side, it is a technical exercise in procedural generation, geometry buffers, animation, and shaders. On the other, it is also a design problem: how do you make thousands of points feel like a coherent, living galaxy instead of a random cloud in space?
+
+This project explores both sides:
+
+1. **Procedural generation:** building a galaxy from mathematical rules instead of static assets.
+2. **Visual refinement:** shaping motion, randomness, and color so the final result feels dynamic and believable.
+
+## Context and objectives
+
+Three.js makes it relatively easy to render particles, but getting them to look good is another story. A naive distribution of points usually produces something that feels flat, chaotic, or visually dead. The real challenge is not just displaying particles, but arranging them in a way that suggests structure: a bright core, visible arms, depth, and subtle movement.
+
+The goal of this project was to create a procedural galaxy that could be regenerated interactively, tuned through a few intuitive parameters, and animated in real time. Rather than relying on prebuilt textures or heavy models, the scene is generated directly in code.
+
+### Generating the first particle cloud
+
+The galaxy begins as a `BufferGeometry` filled with thousands of particles. Each particle gets a position in space, stored inside a typed array for performance. This is the foundation of the whole effect.
+
+```Javascript
+const geometry = new THREE.BufferGeometry()
+const positions = new Float32Array(parameters.count * 3)
+
+for (let i = 0; i < parameters.count; i++) {
+  const i3 = i * 3
+
+  positions[i3] = (Math.random() - 0.5) * 10
+  positions[i3 + 1] = (Math.random() - 0.5) * 10
+  positions[i3 + 2] = (Math.random() - 0.5) * 10
+}
+
+geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+```
+
+At this stage, the result is just a basic cloud of particles. It works technically, but it does not yet feel like a galaxy. 
+That is where structure and controlled randomness begin to matter.
+
+### Shaping spiral arms
+
+To move from a cloud to a galaxy, each particles needs to be placed according to radial logic.
+Instead of scattering points uniformly, we assing each one a radius, then rotatie it around the center depeding on which branch it belongs to.
+
+```Javascript
+
+for (let i = 0; i < parameters.count; i++) {
+  const i3 = i * 3
+  const radius = Math.random() * parameters.radius
+  const branchAngle =
+    ((i % parameters.branches) / parameters.branches) * Math.PI * 2
+  const spinAngle = radius * parameters.spin
+
+  positions[i3] = Math.cos(branchAngle + spinAngle) * radius
+  positions[i3 + 1] = 0
+  positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius
+}
+```
+
+This is the moment where the effect starts becoming recognizable.
+The particles are no longer random points : they begin to form curved spiral arms around a center.
+
+---
+
+## Adding life to the structure
+
+A perfect spiral is too clean to look natural. Real galaxies are messy, asymmetric and noisy.
+To make the shape feel more organic, I introduced controlled randomness around the ideal particle positions.
+
+### Breaking the symmetry
+
+Each particle gets a small random offset, but the amount of randomness depends ont its radius.
+This helps preserve a dense core while allowing the outer arms to spread more naturally.
+
+```Javascript
+const randomX =
+  Math.pow(Math.random(), parameters.randomnessPower) *
+  (Math.random() < 0.5 ? 1 : -1) *
+  parameters.randomness *
+  radius
+
+const randomY =
+  Math.pow(Math.random(), parameters.randomnessPower) *
+  (Math.random() < 0.5 ? 1 : -1) *
+  parameters.randomness *
+  radius
+
+const randomZ =
+  Math.pow(Math.random(), parameters.randomnessPower) *
+  (Math.random() < 0.5 ? 1 : -1) *
+  parameters.randomness *
+  radius
+
+positions[i3] = Math.cos(branchAngle + spinAngle) * radius + randomX
+positions[i3 + 1] = randomY
+positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ
+```
+
+This steps makes a huge visual difference. Instead of looking computer-perfect, the galaxy starts to feel unstable, diffuse and alive.
+
+### Working with color gradients
+
+Color is another key part of the illusion. A bright warm center and cooler outer regions immediately make the galaxy more readable.
+Instead of assigning one color to all particles, I interpolate betwee, an inside color and an outside color depening on the radius.
+
+```Javascript
+const insideColor = new THREE.Color(parameters.insideColor)
+const outsideColor = new THREE.Color(parameters.outsideColor)
+
+const mixedColor = insideColor.clone()
+mixedColor.lerp(outsideColor, radius / parameters.radius)
+
+colors[i3] = mixedColor.r
+colors[i3 + 1] = mixedColor.g
+colors[i3 + 2] = mixedColor.b
+```
+
+This gives the galaxy much more depth. Even before animation, the eye can already distinguish the dense luminous center from the fading outer arms.
+
+---
+
+## A better approach
+Once the static version looked convincing, the next step was to make it feel dynamic.
+A galaxy should not look frozen, even subtle motion is enough to make the scene far more immersive.
+
+### Method
+
+The approach I chose was to animate the particles over time rather than rebuilding the geometry every frame.
+In practice, this means using time uniforms and shader logic, or updating positons in a controlled way so the system remains efficient.
+
+A simple time-driven animation can start from the render loop:
+
+```Javascript
+const clock = new THREE.Clock()
+
+const tick = () => {
+  const elapsedTime = clock.getElapsedTime()
+
+  points.rotation.y = elapsedTime * 0.05
+
+  renderer.render(scene, camera)
+  window.requestAnimationFrame(tick)
+}
+
+tick()
+```
+
+Even a slow global rotation already helps the scene feel alive, but more advanced animation can go further by making particles subtly drift, pulse, or obit depending on their radius.
+
+### Results
+
+What I like about this project is that the final result comes from a surprisingly small set of ideas:
+
+- radial placement,
+- spiral branch logic,
+- controlled randomness,
+- color interpolation,
+- and ligthweight animation.
+
+Together, these ingredients are enough to produce something that feels much richer than the code suggests.
+It is a good example of how procedural generation can create visually compelling scenes without relying on complex assets.
+
+In the end, this project became both a Three.js technical exercise and a creative playground.
+It taught me a lot about particle systems, parameter tuning, and the balance between mathematical structure and visual intuition.
+
+```Javascript
+const parameters = {
+  count: 100000,
+  size: 0.01,
+  radius: 5,
+  branches: 5,
+  spin: 1,
+  randomness: 0.2,
+  randomnessPower: 3,
+  insideColor: '#ff6030',
+  outsideColor: '#1b3984'
+}
+```
+
+The full source code is available on Github if you want to explore the implementation in more detail !
