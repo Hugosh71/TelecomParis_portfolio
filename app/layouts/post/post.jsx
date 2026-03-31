@@ -1,3 +1,4 @@
+import { Button } from '~/components/button';
 import { Divider } from '~/components/divider';
 import { Footer } from '~/components/footer';
 import { Heading } from '~/components/heading';
@@ -14,7 +15,7 @@ import { cssProps, msToNum, numToMs } from '~/utils/style';
 import styles from './post.module.css';
 import { Link as RouterLink } from '@remix-run/react';
 
-export const Post = ({ children, title, date, banner, timecode }) => {
+export const Post = ({ children, title, date, banner, timecode, github, githubLabel = 'View on GitHub' }) => {
   const scrollToHash = useScrollToHash();
   const imageRef = useRef();
   const [dateTime, setDateTime] = useState(null);
@@ -96,6 +97,18 @@ export const Post = ({ children, title, date, banner, timecode }) => {
                 </svg>
               </RouterLink>
               <div className={styles.timecode}>{timecode}</div>
+              {github && (
+                <Button
+                  secondary
+                  iconHoverShift
+                  icon="chevron-right"
+                  href={github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {githubLabel}
+                </Button>
+              )}
             </div>
           </div>
         </header>

@@ -112,7 +112,7 @@ export const Pencity = () => {
                   : imageSprLessonBuilderLightPlaceholder
               }
               sizes={`(max-width: ${media.mobile}px) 100vw, (max-width: ${media.tablet}px) 800px, 1000px`}
-              alt="The aero lesson builder app dragging an audio component into a screen about plant cells."
+              alt="Challenges of the project"
             />
           </ProjectSectionContent>
         </ProjectSection>
@@ -142,7 +142,7 @@ export const Pencity = () => {
                   ? imageSprComponentsDarkPlaceholder
                   : imageSprComponentsLightPlaceholder
               }
-              alt={`A set of ${theme} themed components for the aero design system`}
+              alt={`How to chose the right detection model`}
               sizes="100vw"
             />
             <ProjectTextRow>
@@ -183,7 +183,7 @@ export const Pencity = () => {
                   ? imageSprDesignSystemDarkPlaceholder
                   : imageSprDesignSystemLightPlaceholder
               }
-              alt="The homepage of the aero design system docs website linking to principles and components."
+              alt="Dataset pipeline"
               sizes="100vw"
             />
             <ProjectTextRow>
@@ -221,7 +221,7 @@ export const Pencity = () => {
                 width={1280}
                 height={800}
                 placeholder={videoSprMotionPlaceholder}
-                alt="A learning designer building and deploying an interactive lesson on volcanism using the app."
+                alt="AR experiency in Unity using both Vuforia and unity pre built AR"
                 sizes={`(max-width: ${media.mobile}px) 100vw, 50vw`}
               />
             </ProjectSectionColumns>

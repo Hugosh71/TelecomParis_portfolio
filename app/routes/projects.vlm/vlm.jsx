@@ -73,7 +73,7 @@ export const Vlm = () => {
               width={800}
               height={500}
               placeholder={sliceAppPlaceholder}
-              alt="The Slice web application showing a selected user annotation."
+              alt="VLM presentation for Fil Rouge project"
               sizes={`(max-width: ${media.mobile}px) 100vw, (max-width: ${media.tablet}px) 90vw, 80vw`}
             />
           </ProjectSectionContent>
@@ -105,7 +105,7 @@ export const Vlm = () => {
                 width={350}
                 height={750}
                 placeholder={sliceSidebarLayersPlaceholder}
-                alt="The layers sidebar design, now with user profiles."
+                alt="VLM test"
                 sizes={`(max-width: ${media.mobile}px) 200px, 343px`}
               />
               <Image
@@ -114,7 +114,7 @@ export const Vlm = () => {
                 width={350}
                 height={750}
                 placeholder={sliceSidebarAnnotationsPlaceholder}
-                alt="Multiple user annotations on a shared layer."
+                alt="Detection by VLM"
                 sizes={`(max-width: ${media.mobile}px) 200px, 343px`}
               />
             </div>
@@ -136,7 +136,7 @@ export const Vlm = () => {
               width={800}
               height={500}
               placeholder={sliceSlidesPlaceholder}
-              alt="The new My Slides tab in slice, showing annotated and favorited slides."
+              alt="Flairsim integration"
               sizes={`(max-width: ${media.mobile}px) 500px, (max-width: ${media.tablet}px) 800px, 1000px`}
             />
           </ProjectSectionContent>
@@ -187,7 +187,7 @@ export const Vlm = () => {
               width={940}
               height={500}
               placeholder={sliceIrlPlaceholder}
-              alt="Students at the University of New South Wales using the new collaborative annotation features"
+              alt="Project future meetings"
             />
           </ProjectSectionContent>
         </ProjectSection>

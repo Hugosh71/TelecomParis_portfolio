@@ -59,7 +59,7 @@ export const Scene = () => {
               width={800}
               height={500}
               placeholder={sliceAppPlaceholder}
-              alt="The Slice web application showing a selected user annotation."
+              alt="Vscode interface of the project"
               sizes={`(max-width: ${media.mobile}px) 100vw, (max-width: ${media.tablet}px) 90vw, 80vw`}
             />
           </ProjectSectionContent>
@@ -95,7 +95,7 @@ export const Scene = () => {
               width={800}
               height={500}
               placeholder={sliceSlides}
-              alt="The new My Slides tab in slice, showing annotated and favorited slides."
+              alt="How scenes are described"
               sizes={`(max-width: ${media.mobile}px) 500px, (max-width: ${media.tablet}px) 800px, 1000px`}
             />
           </ProjectSectionContent>

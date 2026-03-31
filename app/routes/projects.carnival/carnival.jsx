@@ -61,7 +61,7 @@ export const Carnival = () => {
               width={800}
               height={500}
               placeholder={sliceAppPlaceholder}
-              alt="The Slice web application showing a selected user annotation."
+              alt="Visual novel for Narrative driven game jam"
               sizes={`(max-width: ${media.mobile}px) 100vw, (max-width: ${media.tablet}px) 90vw, 80vw`}
             />
           </ProjectSectionContent>
@@ -102,7 +102,7 @@ export const Carnival = () => {
               width={800}
               height={500}
               placeholder={sliceSlides}
-              alt="The new My Slides tab in slice, showing annotated and favorited slides."
+              alt="Jam constraints"
               sizes={`(max-width: ${media.mobile}px) 500px, (max-width: ${media.tablet}px) 800px, 1000px`}
             />
           </ProjectSectionContent>
@@ -140,7 +140,7 @@ export const Carnival = () => {
               width={940}
               height={500}
               placeholder={sliceIrl}
-              alt="Students at the University of New South Wales using the new collaborative annotation features"
+              alt="Game finished"
             />
           </ProjectSectionContent>
         </ProjectSection>
