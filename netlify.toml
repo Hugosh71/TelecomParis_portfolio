@@ -5,11 +5,8 @@
 [build.environment]
   NODE_VERSION = "20"
 
-[functions]
-  node_bundler = "esbuild"
-
 [[redirects]]
   from = "/*"
-  to = "/.netlify/functions/server"
+  to = "/.netlify/functions/remix-server"
   status = 200
   force = true
