@@ -14,7 +14,7 @@ import { useRef } from 'react';
 import { cssProps, msToNum, numToMs } from '~/utils/style';
 import { baseMeta } from '~/utils/meta';
 import { Form, useActionData, useNavigation } from '@remix-run/react';
-import { json } from '@remix-run/node';
+import { json } from '@remix-run/cloudflare';
 import styles from './contact.module.css';
 
 export const meta = () => {
@@ -64,7 +64,7 @@ export async function action({ context, request }) {
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+      'Authorization': `Bearer ${context?.cloudflare?.env?.RESEND_API_KEY || process.env.RESEND_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
